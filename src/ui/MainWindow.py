@@ -1,8 +1,11 @@
 
 import os
+import logging
 
 from PySide2 import QtWidgets
-from PySide2.QtCore import Signal, Slot, SIGNAL, SLOT
+from PySide2.QtCore import Signal, Slot, SLOT
+
+from .FileView import FileView
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -12,9 +15,12 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
 
+        self.setUnifiedTitleAndToolBarOnMac(True)
+
         self.fileMenu = super().menuBar().addMenu("&File")
-        open_action = self.fileMenu.addAction("&Open")
-        open_action.connect(SIGNAL('triggered()'), self, SLOT('open_file_dialog()'))
+        self.fileMenu.addAction("&Open", self, SLOT('open_file_dialog()'))
+
+        self.open.connect(self.open_file)
 
     @Slot()
     def open_file_dialog(self):
@@ -26,4 +32,14 @@ class MainWindow(QtWidgets.QMainWindow):
             "ISMRMRD Data Files (*.h5)"
         )
 
+        if not file_name:
+            return
+
         self.open.emit(file_name)
+
+    def open_file(self, file_name):
+        logging.info(f"Opening file: {file_name}")
+        self.setWindowFilePath(file_name)
+        self.setCentralWidget(FileView(self, file_name))
+
+
