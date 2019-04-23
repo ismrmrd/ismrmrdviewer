@@ -1,0 +1,7 @@
+h5py==2.9.0
+ismrmrd==1.6.0
+numpy==1.16.2
+PySide2==5.12.2
+PyXB==1.2.6
+shiboken2==5.12.2
+six==1.12.0

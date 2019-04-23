@@ -1,0 +1,2 @@
+simple.h5 filter=lfs diff=lfs merge=lfs -text
+spiral.h5 filter=lfs diff=lfs merge=lfs -text
