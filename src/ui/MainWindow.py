@@ -18,7 +18,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setUnifiedTitleAndToolBarOnMac(True)
 
         self.fileMenu = super().menuBar().addMenu("&File")
-        self.fileMenu.addAction("&Open", self, SLOT('open_file_dialog()'))
+        self.fileMenu.addAction("&Open", self.open_file_dialog)
 
         self.open.connect(self.open_file)
 
