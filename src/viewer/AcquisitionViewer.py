@@ -2,7 +2,7 @@
 import typing
 import logging
 
-from PySide2 import QtWidgets, QtCore
+from PySide2 import QtWidgets, QtCore, QtGui
 from PySide2.QtCore import Qt
 
 import numpy as np
@@ -45,23 +45,17 @@ class AcquisitionModel(QtCore.QAbstractTableModel):
         super().__init__()
         self.acquisitions = list(container.acquisitions)
 
-        self.data_role_handlers = {
-            Qt.DisplayRole: self.display_handler,
-            Qt.ToolTipRole: self.tooltip_handler,
-            Qt.TextAlignmentRole: self.alignment_handler
-        }
-
-        self.display_handlers = {
-            'physiology_time_stamp': self.display_array,
-            'channel_mask': self.display_channel_mask,
-            'position': self.display_array,
-            'read_dir': self.display_array,
-            'phase_dir': self.display_array,
-            'slice_dir': self.display_array,
-            'patient_table_position': self.display_array,
-            'user_int': self.display_array,
-            'user_float': self.display_array,
-            'idx': self.display_encoding_counters
+        self.data_handlers = {
+            'idx': self.__encoding_counters_handler,
+            'physiology_time_stamp': self.__array_handler,
+            'channel_mask': self.__array_handler,
+            'position': self.__array_handler,
+            'read_dir': self.__array_handler,
+            'phase_dir': self.__array_handler,
+            'slice_dir': self.__array_handler,
+            'patient_table_position': self.__array_handler,
+            'user_int': self.__array_handler,
+            'user_float': self.__array_handler
         }
 
     def rowCount(self, _=None) -> int:
@@ -71,6 +65,7 @@ class AcquisitionModel(QtCore.QAbstractTableModel):
         return len(acquisition_header_fields)
 
     def headerData(self, section: int, orientation: Qt.Orientation, role: int = Qt.DisplayRole) -> typing.Any:
+
         if orientation == Qt.Orientation.Vertical:
             return None
 
@@ -80,36 +75,27 @@ class AcquisitionModel(QtCore.QAbstractTableModel):
             return header
         if role == Qt.ToolTipRole:
             return tooltip
+
         return None
-
-    def default_role_handler(self, _, __, ___):
-        return None
-
-    def tooltip_handler(self, _, __, tooltip):
-        return tooltip
-
-    def alignment_handler(self, _, __, ___):
-        return Qt.AlignmentFlag.AlignVCenter
-
-    def display_array(self, array):
-        return ', '.join([str(item) for item in array])
-
-    def display_channel_mask(self, channel_mask):
-        return self.display_array(channel_mask)
-
-    def display_encoding_counters(self, _):
-        return 'Not Displayed'
-
-    def display_handler(self, acquisition, attribute, ___):
-        handler = self.display_handlers.get(attribute, str)
-        return handler(getattr(acquisition, attribute))
 
     def data(self, index: QtCore.QModelIndex, role: int = Qt.DisplayRole) -> typing.Any:
         acquisition = self.acquisitions[index.row()]
         attribute, _, tooltip = acquisition_header_fields[index.column()]
 
-        handler = self.data_role_handlers.get(role, self.default_role_handler)
-        return handler(acquisition, attribute, tooltip)
+        handler = self.data_handlers.get(attribute, lambda x: x)
+
+        if role == Qt.DisplayRole:
+            return handler(getattr(acquisition, attribute))
+        if role == Qt.ToolTipRole:
+            return tooltip
+
+        return None
+
+    def __array_handler(self, array):
+        return ', '.join([str(item) for item in array])
+
+    def __encoding_counters_handler(self, _):
+        return "Not Displayed"
 
 
 class AcquisitionViewer(QtWidgets.QSplitter):
