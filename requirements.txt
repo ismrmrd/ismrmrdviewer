@@ -1,7 +1,12 @@
+cycler==0.10.0
 h5py==2.9.0
-ismrmrd==1.6.0
+-e git+git@gitlab.com:GradientSoftware/ismrmrd-python.git@3a8ed9c17511effbc8bf3ccb5ccad211b569014b#egg=ismrmrd
+kiwisolver==1.1.0
+matplotlib==3.0.3
 numpy==1.16.2
+pyparsing==2.4.0
 PySide2==5.12.2
+python-dateutil==2.8.0
 PyXB==1.2.6
 shiboken2==5.12.2
 six==1.12.0

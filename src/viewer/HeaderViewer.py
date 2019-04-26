@@ -17,7 +17,7 @@ class HeaderViewer(QtWidgets.QPlainTextEdit):
         self.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
 
         dom = container.header.toDOM()
-        xml = dom.toprettyxml(indent=2*' ')
+        xml = dom.toprettyxml(indent=4*' ')
 
         self.setPlainText(xml)
 

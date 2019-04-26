@@ -1,17 +1,22 @@
 
 import typing
 import logging
-import datetime
 
-from PySide2 import QtWidgets, QtCore, QtCharts, QtGui
+from PySide2 import QtWidgets, QtCore
 from PySide2.QtCore import Qt
+
+import numpy as np
+import matplotlib as plt
+
+from matplotlib.backends.backend_qt5agg import FigureCanvas
+
 
 acquisition_header_fields = [
     ('version', 'Version', "ISMRMRD Version"),
     ('flags', 'Flags', "Acquisition flags bitfield."),
     ('measurement_uid', 'UID', "Unique ID for the measurement."),
     ('scan_counter', 'Scan Counter', "Current acquisition number in the measurement."),
-    ('acquisition_time_stamp', 'Acquisition Timestamp', None),
+    ('acquisition_time_stamp', 'Acquisition Timestamp', "Acquisition Timestamp"),
     ('physiology_time_stamp', 'Physiology Timestamps', "Physiology Timestamps (e.g. ecg, breathing, etc.)"),
     ('number_of_samples', 'Samples', "Number of samples acquired."),
     ('available_channels', 'Available Channels', "Number of available channels."),
@@ -28,7 +33,7 @@ acquisition_header_fields = [
     ('phase_dir', 'Phase Direction', "Directional cosines of the phase."),
     ('slice_dir', 'Slice Direction', "Directional cosines of the slice direction."),
     ('patient_table_position', 'Patient Table', "Patient table off-center."),
-    ('idx', 'Encoding Counters', None),
+    ('idx', 'Encoding Counters', "Encoding Counters"),
     ('user_int', 'User Integers', "Free user parameters."),
     ('user_float', 'User Floats', "Free user parameters.")
 ]
@@ -114,18 +119,27 @@ class AcquisitionViewer(QtWidgets.QSplitter):
 
         self.model = AcquisitionModel(container)
 
-        self.chart = QtCharts.QtCharts.QChart()
-        self.chart.createDefaultAxes()
+        self.figure = plt.figure.Figure()
+        self.canvas = FigureCanvas(self.figure)
 
-        self.acquisition_view = QtWidgets.QTableView(self)
-        self.acquisition_view.setModel(self.model)
-        self.acquisition_view.setAlternatingRowColors(True)
-        self.acquisition_view.resizeColumnsToContents()
-
-        self.chart_view = QtCharts.QtCharts.QChartView(self.chart)
-        self.chart_view.setRenderHint(QtGui.QPainter.Antialiasing)
+        self.acquisitions = QtWidgets.QTableView(self)
+        self.acquisitions.setModel(self.model)
+        self.acquisitions.setAlternatingRowColors(True)
+        self.acquisitions.resizeColumnsToContents()
+        self.acquisitions.clicked.connect(self.table_clicked)
 
         self.setOrientation(Qt.Vertical)
-        self.addWidget(self.acquisition_view)
-        self.addWidget(self.chart_view)
+        self.addWidget(self.acquisitions)
+        self.addWidget(self.canvas)
+
+        self.setStretchFactor(0, 6)
+        self.setStretchFactor(1, 1)
+
+    def table_clicked(self, index):
+        acquisition = self.model.acquisitions[index.row()]
+        self.plot(acquisition)
+
+    def plot(self, acquisition):
+        logging.info(f"Plotting acquisition {{scan_counter={acquisition.scan_counter}}}")
+
 

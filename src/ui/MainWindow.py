@@ -3,9 +3,9 @@ import os
 import logging
 
 from PySide2 import QtWidgets
-from PySide2.QtCore import Signal, Slot, SLOT
+from PySide2.QtCore import Signal, Slot
 
-from .FileView import FileView
+from .FileWidget import FileWidget
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -40,6 +40,6 @@ class MainWindow(QtWidgets.QMainWindow):
     def open_file(self, file_name):
         logging.info(f"Opening file: {file_name}")
         self.setWindowFilePath(file_name)
-        self.setCentralWidget(FileView(self, file_name))
+        self.setCentralWidget(FileWidget(self, file_name))
 
 
