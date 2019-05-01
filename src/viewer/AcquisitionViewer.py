@@ -1,5 +1,4 @@
 
-import typing
 import logging
 
 from PySide2 import QtWidgets, QtCore, QtGui
@@ -58,13 +57,13 @@ class AcquisitionModel(QtCore.QAbstractTableModel):
             'user_float': self.__array_handler
         }
 
-    def rowCount(self, _=None) -> int:
+    def rowCount(self, _=None):
         return len(self.acquisitions)
 
-    def columnCount(self, _=None) -> int:
+    def columnCount(self, _=None):
         return len(acquisition_header_fields)
 
-    def headerData(self, section: int, orientation: Qt.Orientation, role: int = Qt.DisplayRole) -> typing.Any:
+    def headerData(self, section, orientation, role=Qt.DisplayRole):
 
         if orientation == Qt.Orientation.Vertical:
             return None
@@ -78,7 +77,7 @@ class AcquisitionModel(QtCore.QAbstractTableModel):
 
         return None
 
-    def data(self, index: QtCore.QModelIndex, role: int = Qt.DisplayRole) -> typing.Any:
+    def data(self, index, role=Qt.DisplayRole):
         acquisition = self.acquisitions[index.row()]
         attribute, _, tooltip = acquisition_header_fields[index.column()]
 
@@ -128,4 +127,4 @@ class AcquisitionViewer(QtWidgets.QSplitter):
     def plot(self, acquisition):
         logging.info(f"Plotting acquisition {{scan_counter={acquisition.scan_counter}}}")
 
-
+        print(acquisition.data.shape)
