@@ -1,6 +1,6 @@
 cycler==0.10.0
 h5py==2.9.0
--e git+git@gitlab.com:GradientSoftware/ismrmrd-python.git@3a8ed9c17511effbc8bf3ccb5ccad211b569014b#egg=ismrmrd
+ismrmrd==1.6.0
 kiwisolver==1.1.0
 matplotlib==3.0.3
 numpy==1.16.2

@@ -2,6 +2,8 @@
 import ismrmrd
 
 from PySide2 import QtWidgets
+from PySide2.QtCore import Qt
+from PySide2.QtGui import QGuiApplication, QCursor
 from viewer import HeaderViewer, ImageViewer, AcquisitionViewer, WaveformViewer
 
 
@@ -12,7 +14,7 @@ class FileWidget(QtWidgets.QSplitter):
 
         self.tree = QtWidgets.QTreeWidget(self)
         self.tree.setHeaderHidden(True)
-        self.tree.itemDoubleClicked.connect(lambda widget, _: self.set_viewer(widget.container, widget.viewer))
+        self.tree.itemClicked.connect(lambda widget, _: self.set_viewer(widget.container, widget.viewer))
 
         FileWidget.__populate_tree(self.tree, ismrmrd.File(file_name, mode='r'))
 
@@ -24,11 +26,13 @@ class FileWidget(QtWidgets.QSplitter):
         self.__balance()
 
     def set_viewer(self, container, factory):
+        QGuiApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
         viewer = factory(container)
         self.replaceWidget(1, viewer)
         self.viewer = viewer
 
         self.__balance()
+        QGuiApplication.restoreOverrideCursor()
 
     def __balance(self):
         self.setStretchFactor(0, 1)
