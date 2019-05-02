@@ -37,23 +37,14 @@ class FileWidget(QtWidgets.QSplitter):
     @staticmethod
     def __available_contents(container):
 
-        def header():
-            if container.has_header():
-                return 'Header', HeaderViewer
+        viewers = {
+            'header': ('Header', HeaderViewer),
+            'images': ('Images', ImageViewer),
+            'waveforms': ('Waveforms', WaveformViewer),
+            'acquisitions': ('Acquisitions', AcquisitionViewer)
+        }
 
-        def images():
-            if container.has_images():
-                return 'Images', ImageViewer
-
-        def acquisitions():
-            if container.has_acquisitions():
-                return 'Acquisitions', AcquisitionViewer
-
-        def waveforms():
-            if container.has_waveforms():
-                return 'Waveforms', WaveformViewer
-
-        return filter(lambda a: a is not None, [header(), acquisitions(), waveforms(), images()])
+        return [viewers[key] for key in container.available()]
 
     @staticmethod
     def __populate_tree(node, container):
