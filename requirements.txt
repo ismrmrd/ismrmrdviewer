@@ -1,6 +1,6 @@
 cycler==0.10.0
 h5py==2.9.0
-ismrmrd==1.6.0
+ismrmrd==1.6.1
 kiwisolver==1.1.0
 matplotlib==3.0.3
 numpy==1.16.2
