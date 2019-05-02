@@ -93,7 +93,8 @@ class AcquisitionModel(QtCore.QAbstractTableModel):
     def __array_handler(self, array):
         return ', '.join([str(item) for item in array])
 
-    def __encoding_counters_handler(self, _):
+    @staticmethod
+    def __encoding_counters_handler(_):
         return "Not Displayed"
 
 
