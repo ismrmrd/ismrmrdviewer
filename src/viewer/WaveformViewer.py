@@ -114,12 +114,13 @@ class WaveformPlotter(FigureCanvas):
         for ax in self.axis:
             ax.clear()
 
-    def plot(self, waveforms,  labeler):
+    def plot(self, waveforms,  formatter, labeler):
 
         for waveform in waveforms:
             x_step = waveform.sample_time_us
             x_scale = np.arange(0, waveform.data.shape[1] * x_step, x_step)
-            for chan, wave in enumerate(waveform.data):
+            wave_data = formatter(waveform.data.T)
+            for chan, wave in enumerate(wave_data.T):
                 self.axis[0].plot(x_scale, wave, label=labeler(waveform.scan_counter,chan))
 
         handles, labels = self.axis[0].get_legend_handles_labels()
@@ -178,4 +179,4 @@ class WaveformViewer(QtWidgets.QSplitter):
         indices = set([idx.row() for idx in self.waveforms.selectedIndexes()])
         waveforms = [self.model.waveforms[idx] for idx in
                         indices]
-        self.canvas.plot(waveforms,  self.waveform_gui.label)
+        self.canvas.plot(waveforms, self.waveform_gui.transform_waveform, self.waveform_gui.label)

@@ -268,11 +268,10 @@ class AcquisitionViewer(QtWidgets.QSplitter):
         menu = QtWidgets.QMenu(self)
         DeleteAction = QtWidgets.QAction('Delete', self)
         y = index.column()
-        print(index.column())
         DeleteAction.triggered.connect(lambda: self.acquisitions.hideColumn(y))
         menu.addAction(DeleteAction)
         menu.popup(QtGui.QCursor.pos())
 
-        SortAction = QtWidgets.QAction('Sort', self)
-        menu.addAction(SortAction)
+        # SortAction = QtWidgets.QAction('Sort', self)
+        # menu.addAction(SortAction)
         menu.popup(QtGui.QCursor.pos())
