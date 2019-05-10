@@ -1,14 +1,14 @@
-
 import logging
 
 from PySide2 import QtWidgets, QtCore, QtGui
 from PySide2.QtCore import Qt
 
 import numpy as np
-import matplotlib as plt
-
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import matplotlib.figure as figure
 from matplotlib.backends.backend_qt5agg import FigureCanvas
-
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 
 acquisition_header_fields = [
     ('version', 'Version', "ISMRMRD Version"),
@@ -90,12 +90,103 @@ class AcquisitionModel(QtCore.QAbstractTableModel):
 
         return None
 
+    def num_coils(self):
+        return self.acquisitions[0].active_channels
+
     def __array_handler(self, array):
         return ', '.join([str(item) for item in array])
 
     @staticmethod
     def __encoding_counters_handler(_):
         return "Not Displayed"
+
+
+class AcquisitionTable(QtWidgets.QTableView):
+    selection_changed = QtCore.Signal()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def selectionChanged(self, selected, deselected):
+        super().selectionChanged(selected, deselected)
+
+        self.selection_changed.emit()
+
+
+class AcquisitionControlGUI(QtWidgets.QWidget):
+
+    def __init__(self,num_channels):
+        super().__init__()
+        layout = QtWidgets.QHBoxLayout()
+        self.data_processing = QtWidgets.QComboBox()
+        self.data_processing.addItem("Mag./Phase", userData={"names": ("Magnitude", "Phase"),
+                                                             "transform": lambda x: (np.abs(x), np.angle(x))})
+        self.data_processing.addItem("Real/Imag", userData={"names": ("Real", "Imag."),
+                                                            "transform": lambda x: (np.real(x), np.imag(x))})
+        layout.addWidget(self.data_processing)
+
+        self.channel_selector = QtWidgets.QComboBox()
+        self.__set_num_channels(num_channels)
+        layout.addWidget(self.channel_selector)
+
+        self.setLayout(layout)
+
+    def __set_num_channels(self, num_channels):
+        for i in range(self.channel_selector.count()):
+            self.channel_selector.removeItem(i)
+
+        for idx in range(num_channels):
+            self.channel_selector.addItem("Channel " + str(idx), userData={"selector": lambda x, i=idx : x[:, i:i + 1],
+                                                                         "labeler": lambda scan, coil: str(scan)})
+
+        self.channel_selector.addItem("All Channels", userData={"selector": lambda x: x,
+                                                                "labeler": lambda scan, coil: str((scan, coil))})
+
+    def label(self, scan, coil):
+        return self.channel_selector.currentData()["labeler"](scan, coil)
+
+    def axes_titles(self):
+        return self.data_processing.currentData()["names"]
+
+    def transform_acquisition(self, acq):
+        return self.data_processing.currentData()["transform"](self.channel_selector.currentData()["selector"](acq))
+
+
+class AcquisitionPlotter(FigureCanvas):
+
+    def __init__(self):
+
+        self.figure = mpl.figure.Figure()
+        self.axis = self.figure.subplots(2, 1, sharex='col')
+        self.figure.subplots_adjust(hspace=0)
+
+        self.legend = mpl.legend.Legend(self.figure, [], [])
+        self.figure.legends.append(self.legend)
+        super().__init__(self.figure)
+
+    def clear(self):
+        for ax in self.axis:
+            ax.clear()
+
+    def plot(self, acquisitions, formatter, labeler):
+
+        for acquisition in acquisitions:
+            acquisition1, acquisition2 = formatter(acquisition)
+            x_step = acquisition.sample_time_us
+            x_scale = np.arange(0, acquisition1.shape[0] * x_step, x_step)
+            for coil, acq1 in enumerate(acquisition1.T):
+                self.axis[0].plot(x_scale, acq1, label=labeler(acquisition.scan_counter, coil))
+            self.axis[1].plot(x_scale, acquisition2)
+
+        handles, labels = self.axis[0].get_legend_handles_labels()
+        self.legend = mpl.legend.Legend(self.figure, handles, labels)
+        self.figure.legends[0] = self.legend
+
+        self.figure.canvas.draw()
+
+    def set_titles(self, titles):
+        for ax, title in zip(self.axis, titles):
+            ax.set_title(title, loc="right", pad=-10)
 
 
 class AcquisitionViewer(QtWidgets.QSplitter):
@@ -105,27 +196,46 @@ class AcquisitionViewer(QtWidgets.QSplitter):
 
         self.model = AcquisitionModel(container)
 
-        self.figure = plt.figure.Figure()
-        self.canvas = FigureCanvas(self.figure)
-
-        self.acquisitions = QtWidgets.QTableView(self)
+        self.acquisitions = AcquisitionTable(self)
         self.acquisitions.setModel(self.model)
         self.acquisitions.setAlternatingRowColors(True)
         self.acquisitions.resizeColumnsToContents()
-        self.acquisitions.clicked.connect(self.table_clicked)
+        self.acquisitions.selection_changed.connect(self.selection_changed)
 
         self.setOrientation(Qt.Vertical)
+
+        self.canvas = AcquisitionPlotter()
+
+        self.bottom_view = QtWidgets.QSplitter()
+        self.acquisition_gui = AcquisitionControlGUI(self.model.num_coils())
+        self.bottom_view.addWidget(self.acquisition_gui)
+        self.acquisition_gui.data_processing.currentIndexChanged.connect(self.selection_changed)
+        self.acquisition_gui.channel_selector.currentIndexChanged.connect(self.selection_changed)
+        # self.bottom_view.setStretchFactor(0, 6)
+
         self.addWidget(self.acquisitions)
         self.addWidget(self.canvas)
+        self.addWidget(self.bottom_view)
+
+        self.navigation_toolbar = NavigationToolbar(self.canvas, self.bottom_view)
+        self.bottom_view.addWidget(self.navigation_toolbar)
 
         self.setStretchFactor(0, 6)
         self.setStretchFactor(1, 1)
 
     def table_clicked(self, index):
         acquisition = self.model.acquisitions[index.row()]
-        self.plot(acquisition)
+        self.plot([acquisition])
 
-    def plot(self, acquisition):
-        logging.info(f"Plotting acquisition {{scan_counter={acquisition.scan_counter}}}")
+    def format_data(self, acq):
+        return self.acquisition_gui.transform_acquisition(acq.data.T)
 
-        print(acquisition.data.shape)
+    def selection_changed(self):
+        self.canvas.clear()
+        self.canvas.set_titles(self.acquisition_gui.axes_titles())
+
+        indices = set([idx.row() for idx in self.acquisitions.selectedIndexes()])
+        acquisitions = [self.model.acquisitions[idx] for idx in
+                        indices]
+        self.canvas.plot(acquisitions, self.format_data, self.acquisition_gui.label)
+
