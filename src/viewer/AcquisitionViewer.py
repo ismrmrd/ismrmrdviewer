@@ -32,7 +32,16 @@ acquisition_header_fields = [
     ('phase_dir', 'Phase Direction', "Directional cosines of the phase."),
     ('slice_dir', 'Slice Direction', "Directional cosines of the slice direction."),
     ('patient_table_position', 'Patient Table', "Patient table off-center."),
-    ('idx', 'Encoding Counters', "Encoding Counters"),
+    ('idx.kspace_encode_step_1', 'Encode Step1', "Encoding Counters"),
+    ('idx.kspace_encode_step_2', 'Encode Step2', "Encoding Counters"),
+    ('idx.average', 'Average', "Encoding Counters"),
+    ('idx.slice', 'Slice', "Encoding Counters"),
+    ('idx.contrast', 'Contrast', "Encoding Counters"),
+    ('idx.phase', 'Phase', "Encoding Counters"),
+    ('idx.repetition', 'Repetition', "Encoding Counters"),
+    ('idx.set', 'Set', "Encoding Counters"),
+    ('idx.segment', 'Segment', "Encoding Counters"),
+    ('idx.user', 'User', "Encoding Counters"),
     ('user_int', 'User Integers', "Free user parameters."),
     ('user_float', 'User Floats', "Free user parameters.")
 ]
@@ -45,7 +54,16 @@ class AcquisitionModel(QtCore.QAbstractTableModel):
         self.acquisitions = list(container.acquisitions)
 
         self.data_handlers = {
-            'idx': self.__encoding_counters_handler,
+            'idx.kspace_encode_step_1': self.__encoding_counters_handler,
+            'idx.kspace_encode_step_2': self.__encoding_counters_handler,
+            'idx.average': self.__encoding_counters_handler,
+            'idx.slice': self.__encoding_counters_handler,
+            'idx.contrast': self.__encoding_counters_handler,
+            'idx.phase': self.__encoding_counters_handler,
+            'idx.repetition': self.__encoding_counters_handler,
+            'idx.set': self.__encoding_counters_handler,
+            'idx.segment': self.__encoding_counters_handler,
+            'idx.user': self.__user_encoding_counters_handler,
             'physiology_time_stamp': self.__array_handler,
             'channel_mask': self.__array_handler,
             'position': self.__array_handler,
@@ -81,21 +99,27 @@ class AcquisitionModel(QtCore.QAbstractTableModel):
         acquisition = self.acquisitions[index.row()]
         attribute, _, tooltip = acquisition_header_fields[index.column()]
 
-        handler = self.data_handlers.get(attribute, lambda x: x)
+        handler = self.data_handlers.get(attribute, lambda acq,attr: getattr(acq,attr))
 
         if role == Qt.DisplayRole:
-            return handler(getattr(acquisition, attribute))
+            return handler(acquisition, attribute)
         if role == Qt.ToolTipRole:
             return tooltip
 
         return None
 
-    def __array_handler(self, array):
+    def __array_handler(self, acquisition,attribute):
+        array = getattr(acquisition,attribute)
         return ', '.join([str(item) for item in array])
 
     @staticmethod
-    def __encoding_counters_handler(_):
-        return "Not Displayed"
+    def __encoding_counters_handler(acquisition, attribute):
+        return getattr(acquisition.idx,attribute[4:])
+
+    @staticmethod
+    def __user_encoding_counters_handler(acquisition, attribute):
+        array = getattr(acquisition.idx, attribute[4:])
+        return ', '.join([str(item) for item in array])
 
 
 class AcquisitionViewer(QtWidgets.QSplitter):
