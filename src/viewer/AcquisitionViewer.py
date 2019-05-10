@@ -15,7 +15,15 @@ acquisition_header_fields = [
     ('flags', 'Flags', "Acquisition flags bitfield."),
     ('measurement_uid', 'UID', "Unique ID for the measurement."),
     ('scan_counter', 'Scan Counter', "Current acquisition number in the measurement."),
-    ('acquisition_time_stamp', 'Acquisition Timestamp', "Acquisition Timestamp"),
+    ('idx.kspace_encode_step_1', 'Encode Step1', "Encoding Counters"),
+    ('idx.kspace_encode_step_2', 'Encode Step2', "Encoding Counters"),
+    ('idx.average', 'Average', "Encoding Counters"),
+    ('idx.slice', 'Slice', "Encoding Counters"),
+    ('idx.contrast', 'Contrast', "Encoding Counters"),
+    ('idx.phase', 'Phase', "Encoding Counters"),
+    ('idx.repetition', 'Repetition', "Encoding Counters"),
+    ('idx.set', 'Set', "Encoding Counters"),
+    ('idx.segment', 'Segment', "Encoding Counters"),    ('acquisition_time_stamp', 'Acquisition Timestamp', "Acquisition Timestamp"),
     ('physiology_time_stamp', 'Physiology Timestamps', "Physiology Timestamps (e.g. ecg, breathing, etc.)"),
     ('number_of_samples', 'Samples', "Number of samples acquired."),
     ('available_channels', 'Available Channels', "Number of available channels."),
@@ -32,15 +40,6 @@ acquisition_header_fields = [
     ('phase_dir', 'Phase Direction', "Directional cosines of the phase."),
     ('slice_dir', 'Slice Direction', "Directional cosines of the slice direction."),
     ('patient_table_position', 'Patient Table', "Patient table off-center."),
-    ('idx.kspace_encode_step_1', 'Encode Step1', "Encoding Counters"),
-    ('idx.kspace_encode_step_2', 'Encode Step2', "Encoding Counters"),
-    ('idx.average', 'Average', "Encoding Counters"),
-    ('idx.slice', 'Slice', "Encoding Counters"),
-    ('idx.contrast', 'Contrast', "Encoding Counters"),
-    ('idx.phase', 'Phase', "Encoding Counters"),
-    ('idx.repetition', 'Repetition', "Encoding Counters"),
-    ('idx.set', 'Set', "Encoding Counters"),
-    ('idx.segment', 'Segment', "Encoding Counters"),
     ('idx.user', 'User Idx', "Encoding Counters"),
     ('user_int', 'User Integers', "Free user parameters."),
     ('user_float', 'User Floats', "Free user parameters.")
@@ -225,6 +224,7 @@ class AcquisitionViewer(QtWidgets.QSplitter):
         self.acquisitions.setAlternatingRowColors(True)
         self.acquisitions.resizeColumnsToContents()
         self.acquisitions.selection_changed.connect(self.selection_changed)
+        self.acquisitions.pressed.connect(self.mouse_clicked)
 
         self.setOrientation(Qt.Vertical)
 
@@ -262,3 +262,17 @@ class AcquisitionViewer(QtWidgets.QSplitter):
                         indices]
         self.canvas.plot(acquisitions, self.format_data, self.acquisition_gui.label)
 
+    def mouse_clicked(self, index):
+        if not QtGui.QGuiApplication.mouseButtons() & Qt.RightButton:
+            return
+        menu = QtWidgets.QMenu(self)
+        DeleteAction = QtWidgets.QAction('Delete', self)
+        y = index.column()
+        print(index.column())
+        DeleteAction.triggered.connect(lambda: self.acquisitions.hideColumn(y))
+        menu.addAction(DeleteAction)
+        menu.popup(QtGui.QCursor.pos())
+
+        SortAction = QtWidgets.QAction('Sort', self)
+        menu.addAction(SortAction)
+        menu.popup(QtGui.QCursor.pos())
