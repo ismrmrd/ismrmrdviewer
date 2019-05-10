@@ -41,7 +41,7 @@ acquisition_header_fields = [
     ('idx.repetition', 'Repetition', "Encoding Counters"),
     ('idx.set', 'Set', "Encoding Counters"),
     ('idx.segment', 'Segment', "Encoding Counters"),
-    ('idx.user', 'User', "Encoding Counters"),
+    ('idx.user', 'User Idx', "Encoding Counters"),
     ('user_int', 'User Integers', "Free user parameters."),
     ('user_float', 'User Floats', "Free user parameters.")
 ]
@@ -235,7 +235,6 @@ class AcquisitionViewer(QtWidgets.QSplitter):
         self.bottom_view.addWidget(self.acquisition_gui)
         self.acquisition_gui.data_processing.currentIndexChanged.connect(self.selection_changed)
         self.acquisition_gui.channel_selector.currentIndexChanged.connect(self.selection_changed)
-        # self.bottom_view.setStretchFactor(0, 6)
 
         self.addWidget(self.acquisitions)
         self.addWidget(self.canvas)

@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python
 import ui
 import sys
 import logging

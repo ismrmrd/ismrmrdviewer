@@ -8,5 +8,6 @@ setup(
     license='LICENSE.txt',
     author='Kristoffer Langeland Knudsen',
     author_email='kristofferlknudsen@gradientsoftware.net',
-    description='Simple tool for viewing ISMRMRD data.'
+    description='Simple tool for viewing ISMRMRD data.',
+    scripts=['ismrmrd-viewer']
 )
