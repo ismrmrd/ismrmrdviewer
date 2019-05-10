@@ -6,8 +6,8 @@ import argparse
 
 from PySide2 import QtWidgets
 
-if __name__ == '__main__':
 
+def main():
     logging.basicConfig(
         format='[%(levelname)s] %(message)s',
         level='INFO'
@@ -28,3 +28,7 @@ if __name__ == '__main__':
         main.open_file(args.file)
 
     sys.exit(app.exec_())
+
+
+if __name__ == '__main__':
+    main()
