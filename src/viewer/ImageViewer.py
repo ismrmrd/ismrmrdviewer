@@ -44,13 +44,14 @@ class ImageViewer(QTW.QWidget):
             self.selected[dim].valueChanged.connect(self.update_image)
         self.selected['Instance'].setMaximum(self.nimg - 1)
 
-        self.animate = QTW.QCheckBox("Animate")
+        self.animate = QTW.QCheckBox("Animate:")
         controls.addWidget(self.animate)
 
         self.animDim = QTW.QComboBox()
         for dim in DIMS:
             self.animDim.addItem(dim)
         controls.addWidget(self.animDim)
+        controls.addStretch()
 
         self.animate.stateChanged.connect(self.animation)
         self.animDim.currentIndexChanged.connect(self.check_dim)
@@ -70,7 +71,7 @@ class ImageViewer(QTW.QWidget):
         controls.addWidget(self.windowScaled)
         controls.addWidget(QTW.QLabel("Level:"))
         controls.addWidget(self.levelScaled)
-
+        controls.addStretch()
 
         self.windowScaled.valueChanged.connect(self.window_input)
         self.levelScaled.valueChanged.connect(self.level_input)
@@ -112,27 +113,42 @@ class ImageViewer(QTW.QWidget):
         self.update_image()
 
     def frame(self):
+        "Convenience method"
         return self.selected['Instance'].value()
 
     def coil(self):
+        "Convenience method"
         return self.selected['Channel'].value()
 
     def slice(self):
+        "Convenience method"
         return self.selected['Slice'].value()
 
     def check_dim(self, v):
+        "Disables animation checkbox for signleton dimensions"
         self.animate.setEnabled(self.stack.shape[v] > 1)
 
+    def update_wl(self):
+        """
+        When only window / level have changed, we don't need to call imshow
+        again, just update clim.
+        """
+        rng = self.window_level()
+        self.image.set_clim(*rng)        
+        self.canvas.draw()
+
     def window_input(self, value, **kwargs):
+        "Handles changes in window spinbox; scales to our [0..1] range"
         self.window = value / self.range 
-        self.update_image()
+        self.update_wl()
 
     def level_input(self, value):
+        "Handles changes in level spinbox; scales to our [0..1] range"
         self.level = value / self.range 
-        self.update_image()
+        self.update_wl()
 
     def mouseMoveEvent(self, event):
-        "Provides window/level behavior."
+        "Provides window/level mouse-drag behavior."
         newx = event.x()
         newy = event.y()
         if self.mloc is None:
@@ -154,17 +170,16 @@ class ImageViewer(QTW.QWidget):
         if self.level > 1:
             self.level = 1.0
 
+        # We update the displayed (scaled by self.range) values, but
+        # we don't want extra update_image calls
         for (cont, var) in ((self.windowScaled, self.window),
                             (self.levelScaled, self.level)):
             cont.blockSignals(True)
             cont.setValue(var * self.range)
             cont.blockSignals(False)
 
-        rng = self.window_level()
-        self.image.set_clim(*rng)        
-#
         self.mloc = (newx, newy)
-        self.canvas.draw()
+        self.update_wl()
 
     def mouseReleaseEvent(self, event):
         "Reset .mloc to indicate we are done with one click/drag operation"
@@ -182,27 +197,33 @@ class ImageViewer(QTW.QWidget):
         control.setValue(new_v % self.stack.shape[0])
 
     def window_level(self):
+        "Perform calculations of (min,max) display range from window/level"
         return (self.level * self.range 
                   - self.window / 2 * self.range + self.min, 
                 self.level * self.range
                   + self.window / 2 * self.range + self.min)
     
-    def update_image(self, slice_n=None, animated=False):
+    def update_image(self, slice_n=None):
+        """
+        Updates the displayed image when a set of indicies (frame/coil/slice)
+        is selected. Connected to singals from the related spinboxes.
+        """
         wl = self.window_level()
         self.ax.clear()
-        kwargs = {}
         self.image = \
             self.ax.imshow(self.stack[self.frame()][self.coil()][self.slice()], 
                            vmin=wl[0],
                            vmax=wl[1],
-                           cmap=pyplot.get_cmap('gray'),
-                           animated=animated)
+                           cmap=pyplot.get_cmap('gray'))
         self.ax.set_xticks([])
         self.ax.set_yticks([])
-        if animated is False:
-            self.canvas.draw()
+        self.canvas.draw()
 
     def animation(self):
+        """
+        Animation is achieved via a timer that drives the selected animDim
+        dimensions' spinbox.
+        """
         if self.animate.isChecked() is False:
             if self.timer:
                 self.timer.stop()
@@ -217,6 +238,7 @@ class ImageViewer(QTW.QWidget):
             return
 
         def increment():
+            "Captures dimName"
             v = self.selected[dimName].value()
             m = self.selected[dimName].maximum()
             self.selected[dimName].setValue((v+1) % m)
@@ -225,3 +247,4 @@ class ImageViewer(QTW.QWidget):
         self.timer.interval = 100
         self.timer.timeout.connect(increment)
         self.timer.start()
+
