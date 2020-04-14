@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-import ui
+from PySide2 import QtCore
+import ismrmrdviewer.ui as ui
 import sys
 import logging
 import argparse
@@ -18,7 +19,7 @@ def main():
     args = parser.parse_args()
 
     app = QtWidgets.QApplication(sys.argv)
-    app.setApplicationName("ismrmrd-viewer")
+    app.setApplicationName("ismrmrdviewer")
 
     main = ui.MainWindow()
     main.resize(800, 600)

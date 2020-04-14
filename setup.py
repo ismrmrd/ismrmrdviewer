@@ -1,15 +1,14 @@
-from setuptools import setup
+from setuptools import setup,find_packages
 
 setup(
-    name='ismrmrd-viewer',
-    version='0.0.2',
-    packages=['ismrmrd-viewer'],
-    package_dir={'ismrmrd-viewer': 'src'},
+    name='ismrmrdviewer',
+    version='0.1.0',
+    packages=find_packages(),
     license='LICENSE.txt',
     author='Kristoffer Langeland Knudsen',
     author_email='kristofferlknudsen@gradientsoftware.net',
     description='Simple tool for viewing ISMRMRD data.',
-    entry_points={'gui_scripts' : [ 'ismrmrd-viewer=viewer:main']},
+    entry_points={'gui_scripts' : [ 'ismrmrdviewer=ismrmrdviewer.__main__:main']},
     install_requires=[
         'cycler',
         'h5py',

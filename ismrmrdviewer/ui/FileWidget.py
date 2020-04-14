@@ -4,7 +4,7 @@ import ismrmrd
 from PySide2 import QtWidgets
 from PySide2.QtCore import Qt
 from PySide2.QtGui import QGuiApplication, QCursor
-from viewer import HeaderViewer, ImageViewer, AcquisitionViewer, WaveformViewer
+from ismrmrdviewer.viewer import HeaderViewer, ImageViewer, AcquisitionViewer, WaveformViewer
 
 
 class FileWidget(QtWidgets.QSplitter):
