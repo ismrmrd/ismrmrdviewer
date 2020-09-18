@@ -11,6 +11,7 @@ git clone https://github.com/ismrmrd/ismrmrdviewer.git
 cd ismrmrdviewer/
 python3 -m venv venv
 . venv/bin/activate
+pip3 install -r requirements.txt 
 python3 setup.py --verbose install
 deactivate
 ```
@@ -20,6 +21,7 @@ git clone https://github.com/ismrmrd/ismrmrdviewer.git
 cd ismrmrdviewer\
 python3 -m venv venv
 venv\bin\activate.bat
+pip3 install -r requirements.txt
 python3 setup.py --verbose install
 deactivate
 ```
@@ -33,6 +35,11 @@ You may need to manually download the test datasets in res/.
 ```bash
 . venv/bin/activate
 ```
+Or better yet, add this to your .bashrc profile: 
+```bash
+alias mrdviewer="__INSERT_PATH_TO_DIR__/ismrmrdviewer/venv/bin/ismrmrdviewer"
+```
+
 ### WINDOWS
 ```cmd
 venv/bin/activate.bat
