@@ -7,6 +7,5 @@ numpy==1.16.2
 pyparsing==2.4.0
 PySide2==5.15.1
 python-dateutil==2.8.0
-PyXB==1.2.6
 shiboken2==5.15.1
 six==1.12.0

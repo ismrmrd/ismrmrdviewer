@@ -2,7 +2,7 @@ from setuptools import setup,find_packages
 
 setup(
     name='ismrmrdviewer',
-    version='0.1.0',
+    version='0.2.1',
     packages=find_packages(),
     license='LICENSE.txt',
     author='Kristoffer Langeland Knudsen',
@@ -19,7 +19,6 @@ setup(
         'pyparsing',
         'PySide2',
         'python-dateutil',
-        'PyXB',
         'shiboken2',
         'six'
     ]

@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import matplotlib.figure as figure
 from matplotlib.backends.backend_qt5agg import FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
-from collections import OrderedDict
+from .utils import CachedDataset
 
 acquisition_header_fields = [
     ('version', 'Version', "ISMRMRD Version"),
@@ -46,37 +46,13 @@ acquisition_header_fields = [
     ('user_float', 'User Floats', "Free user parameters.")
 ]
 
-class CachedAcquisitions :
 
-    def __init__(self, dataset, buffer_size : int = 1024  ):
-        self.buffer_size = buffer_size
-        self.dataset = dataset
-        self.buffer = OrderedDict()
-
-    def __getitem__(self, key):
-
-        if key in self.buffer:
-            acq = self.buffer[key]
-            self.buffer.move_to_end(key)
-            return acq
-
-        acq = self.dataset[key]
-        self.__buffer_value(key,acq)
-        return acq
-
-    def __buffer_value(self,key,acq ):
-        self.buffer[key] = acq
-        if len(self.buffer) > self.buffer_size:
-            self.buffer.popitem(last=False)
-
-    def __len__(self):
-        return self.dataset.data.size
 
 class AcquisitionModel(QtCore.QAbstractTableModel):
 
     def __init__(self, container):
         super().__init__()
-        self.acquisitions = CachedAcquisitions(container.acquisitions)
+        self.acquisitions = CachedDataset(container.acquisitions)
 
         self.data_handlers = {
             'idx.kspace_encode_step_1': self.__encoding_counters_handler,

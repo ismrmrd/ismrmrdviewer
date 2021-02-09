@@ -11,6 +11,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvas
 from .AcquisitionViewer import AcquisitionTable
 
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+from .utils import CachedDataset
 
 # RR: example waveform headers are not arrays
 waveform_header_fields = [
@@ -31,7 +32,7 @@ class WaveformModel(QtCore.QAbstractTableModel):
         super().__init__()
 
         self.container = container
-        self.waveforms = list(container.waveforms)
+        self.waveforms = CachedDataset(container.waveforms)
 
         logging.info("Waveform constructor.")
 
