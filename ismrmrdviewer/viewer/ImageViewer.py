@@ -88,20 +88,32 @@ class ImageViewer(QTW.QWidget):
         self.canvas.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents)
         self.canvas.setSizePolicy(QTW.QSizePolicy.Expanding,
                                   QTW.QSizePolicy.Expanding)
-        layout.addWidget(self.canvas) 
+        layout.addWidget(self.canvas)
+
+        self.label_base = "A{:d}/S{:d}/C{:d}/P{:d}/R{:d}/S{:d}"
+        self.label = QTW.QLabel("")
+        self.label.setMaximumSize(140, 20)
+
+        layout.addWidget(self.label)
+
+
         
         self.stack = numpy.array(self.container.images.data)
         if self.stack.shape[0] == 1:
             self.animate.setEnabled(False)
-            
-        #pdb.set_trace()
+
+        logging.info("Container size {}".format(str(self.stack.shape)))
 
         # Window/Level support
         self.min = self.stack.min()
         self.max = self.stack.max()
         self.range = self.max - self.min
-        self.window = 1.0
-        self.level = 0.5
+
+        v1 = numpy.percentile(self.stack,2)
+        v2 = numpy.percentile(self.stack,98)
+        self.window = (v2-v1)/self.range
+        self.level = (v2+v1)/2/self.range
+
         self.mloc = None
 
         # For animation
@@ -111,6 +123,12 @@ class ImageViewer(QTW.QWidget):
         self.selected['Slice'].setMaximum(len(self.stack[0][0]) - 1)
 
         self.update_image()
+
+        for (cont, var) in ((self.windowScaled, self.window),
+                            (self.levelScaled, self.level)):
+            cont.blockSignals(True)
+            cont.setValue(var * self.range)
+            cont.blockSignals(False)
 
     def frame(self):
         "Convenience method"
@@ -189,12 +207,12 @@ class ImageViewer(QTW.QWidget):
         "Handle scroll event; could use some time-based limiting."
         control = self.selected['Instance']
         if event.delta() > 0:
-            new_v = control.value() + 1
-        elif event.delta() < 0:
             new_v = control.value() - 1
+        elif event.delta() < 0:
+            new_v = control.value() + 1
         else:
             return
-        control.setValue(new_v % self.stack.shape[0])
+        control.setValue(max(min(new_v,self.stack.shape[0]-1),0))
 
     def window_level(self):
         "Perform calculations of (min,max) display range from window/level"
@@ -218,6 +236,8 @@ class ImageViewer(QTW.QWidget):
         self.ax.set_xticks([])
         self.ax.set_yticks([])
         self.canvas.draw()
+        idx = self.container.images.headers[self.frame()]
+        self.label.setText(self.label_base.format(idx['average'],idx['slice'],idx['contrast'],idx['phase'],idx['repetition'],idx['set']))
 
     def animation(self):
         """
