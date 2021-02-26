@@ -29,7 +29,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self,
             "Open ISMRMRD Data File",
             os.getcwd(),
-            "ISMRMRD Data Files (*.h5)"
+            "ISMRMRD Data Files (*.h5 *.mrd);;All Files (*)"
         )
 
         if not file_name:
