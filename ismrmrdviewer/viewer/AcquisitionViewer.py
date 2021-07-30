@@ -10,6 +10,64 @@ import matplotlib.figure as figure
 from matplotlib.backends.backend_qt5agg import FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from .utils import CachedDataset
+from enum import Enum
+
+class AcqFlags(Enum):
+    ISMRMRD_ACQ_FIRST_IN_ENCODE_STEP1               =  1
+    ISMRMRD_ACQ_LAST_IN_ENCODE_STEP1                =  2
+    ISMRMRD_ACQ_FIRST_IN_ENCODE_STEP2               =  3
+    ISMRMRD_ACQ_LAST_IN_ENCODE_STEP2                =  4
+    ISMRMRD_ACQ_FIRST_IN_AVERAGE                    =  5
+    ISMRMRD_ACQ_LAST_IN_AVERAGE                     =  6
+    ISMRMRD_ACQ_FIRST_IN_SLICE                      =  7
+    ISMRMRD_ACQ_LAST_IN_SLICE                       =  8
+    ISMRMRD_ACQ_FIRST_IN_CONTRAST                   =  9
+    ISMRMRD_ACQ_LAST_IN_CONTRAST                    = 10
+    ISMRMRD_ACQ_FIRST_IN_PHASE                      = 11
+    ISMRMRD_ACQ_LAST_IN_PHASE                       = 12
+    ISMRMRD_ACQ_FIRST_IN_REPETITION                 = 13
+    ISMRMRD_ACQ_LAST_IN_REPETITION                  = 14
+    ISMRMRD_ACQ_FIRST_IN_SET                        = 15
+    ISMRMRD_ACQ_LAST_IN_SET                         = 16
+    ISMRMRD_ACQ_FIRST_IN_SEGMENT                    = 17
+    ISMRMRD_ACQ_LAST_IN_SEGMENT                     = 18
+    ISMRMRD_ACQ_IS_NOISE_MEASUREMENT                = 19
+    ISMRMRD_ACQ_IS_PARALLEL_CALIBRATION             = 20
+    ISMRMRD_ACQ_IS_PARALLEL_CALIBRATION_AND_IMAGING = 21
+    ISMRMRD_ACQ_IS_REVERSE                          = 22
+    ISMRMRD_ACQ_IS_NAVIGATION_DATA                  = 23
+    ISMRMRD_ACQ_IS_PHASECORR_DATA                   = 24
+    ISMRMRD_ACQ_LAST_IN_MEASUREMENT                 = 25
+    ISMRMRD_ACQ_IS_HPFEEDBACK_DATA                  = 26
+    ISMRMRD_ACQ_IS_DUMMYSCAN_DATA                   = 27
+    ISMRMRD_ACQ_IS_RTFEEDBACK_DATA                  = 28
+    ISMRMRD_ACQ_IS_SURFACECOILCORRECTIONSCAN_DATA   = 29
+    ISMRMRD_ACQ_COMPRESSION1                        = 53
+    ISMRMRD_ACQ_COMPRESSION2                        = 54
+    ISMRMRD_ACQ_COMPRESSION3                        = 55
+    ISMRMRD_ACQ_COMPRESSION4                        = 56
+    ISMRMRD_ACQ_USER1                               = 57
+    ISMRMRD_ACQ_USER2                               = 58
+    ISMRMRD_ACQ_USER3                               = 59
+    ISMRMRD_ACQ_USER4                               = 60
+    ISMRMRD_ACQ_USER5                               = 61
+    ISMRMRD_ACQ_USER6                               = 62
+    ISMRMRD_ACQ_USER7                               = 63
+    ISMRMRD_ACQ_USER8                               = 64
+    
+    @classmethod
+    def has_value(cls, value):
+        return value in cls._value2member_map_ 
+
+
+def getFlagsDescription(flags):
+    x=""
+    for idx in range(64):
+        if((flags&(1<<idx)) and AcqFlags.has_value(idx+1)):
+            member=AcqFlags(idx+1)
+            x=x+member.name+"\n"
+    return x
+
 
 acquisition_header_fields = [
     ('version', 'Version', "ISMRMRD Version"),
@@ -104,6 +162,9 @@ class AcquisitionModel(QtCore.QAbstractTableModel):
             handler = self.data_handlers.get(attribute, lambda acq, attr: getattr(acq, attr))
             return handler(acquisition, attribute)
         if role == Qt.ToolTipRole:
+            if(index.column()==1):
+                flags=self.acquisitions[index.row()].flags
+                tooltip=getFlagsDescription(flags)
             return tooltip
 
         return None
