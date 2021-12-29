@@ -237,7 +237,7 @@ class ImageViewer(QTW.QWidget):
         self.ax.set_yticks([])
         self.canvas.draw()
         idx = self.container.images.headers[self.frame()]
-        self.label.setText(self.label_base.format(idx['average'],idx['slice'],idx['contrast'],idx['phase'],idx['repetition'],idx['set']))
+        self.label.setText(self.label_base.format(int(idx['average']),int(idx['slice']),int(idx['contrast']),int(idx['phase']),int(idx['repetition']),int(idx['set'])))
 
     def animation(self):
         """
