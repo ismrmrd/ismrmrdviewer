@@ -11,6 +11,54 @@ from matplotlib.backends.backend_qt5agg import FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from .utils import CachedDataset
 
+acquisition_flags = {
+    0x01 << 0: 'ENCODE_STEP1 :: first',
+    0x01 << 1: 'ENCODE_STEP1 :: last',
+    0x01 << 2: 'ENCODE_STEP2 :: first',
+    0x01 << 3: 'ENCODE_STEP2 :: last',
+    0x01 << 4: 'AVERAGE :: first',
+    0x01 << 5: 'AVERAGE :: last',
+    0x01 << 6: 'SLICE :: first',
+    0x01 << 7: 'SLICE :: last',
+    0x01 << 8: 'CONTRAST :: first',
+    0x01 << 9: 'CONTRAST :: last',
+    0x01 << 10: 'PHASE :: first',
+    0x01 << 11: 'PHASE :: last',
+    0x01 << 12: 'REPETITION :: first',
+    0x01 << 13: 'REPETITION :: last',
+    0x01 << 14: 'SET :: first',
+    0x01 << 15: 'SET :: last',
+    0x01 << 16: 'SEGMENT :: first',
+    0x01 << 17: 'SEGMENT :: last',
+    0x01 << 18: 'NOISE_MEASUREMENT',
+    0x01 << 19: 'PARALLEL_CALIBRATION',
+    0x01 << 20: 'PARALLEL_CALIBRATION_AND_IMAGING',
+    0x01 << 21: 'REVERSE',
+    0x01 << 22: 'NAVIGATION_DATA',
+    0x01 << 23: 'PHASE_CORRECTION_DATA',
+    0x01 << 24: 'MEASUREMENT :: last',
+    0x01 << 25: 'HP_FEEDBACK_DATA',
+    0x01 << 26: 'DUMMY_DATA',
+    0x01 << 27: 'RT_FEEDBACK_DATA',
+    0x01 << 28: 'SURFACE_COIL_CORRECTION_DATA',
+    0x01 << 29: 'PHASE_STABILIZATION_REFERENCE',
+    0x01 << 30: 'PHASE_STABILIZATION',
+
+    0x01 << 52: 'COMPRESSION :: 1',
+    0x01 << 53: 'COMPRESSION :: 2',
+    0x01 << 54: 'COMPRESSION :: 3',
+    0x01 << 55: 'COMPRESSION :: 4',
+
+    0x01 << 56: 'USER :: 1',
+    0x01 << 57: 'USER :: 2',
+    0x01 << 58: 'USER :: 3',
+    0x01 << 59: 'USER :: 4',
+    0x01 << 60: 'USER :: 5',
+    0x01 << 61: 'USER :: 6',
+    0x01 << 62: 'USER :: 7',
+    0x01 << 63: 'USER :: 8',
+}
+
 acquisition_header_fields = [
     ('version', 'Version', "ISMRMRD Version"),
     ('flags', 'Flags', "Acquisition flags bitfield."),
@@ -47,7 +95,6 @@ acquisition_header_fields = [
 ]
 
 
-
 class AcquisitionModel(QtCore.QAbstractTableModel):
 
     def __init__(self, container):
@@ -55,6 +102,7 @@ class AcquisitionModel(QtCore.QAbstractTableModel):
         self.acquisitions = CachedDataset(container.acquisitions)
 
         self.data_handlers = {
+            'flags': self.__flags_handler,
             'idx.kspace_encode_step_1': self.__encoding_counters_handler,
             'idx.kspace_encode_step_2': self.__encoding_counters_handler,
             'idx.average': self.__encoding_counters_handler,
@@ -111,13 +159,20 @@ class AcquisitionModel(QtCore.QAbstractTableModel):
     def num_coils(self):
         return self.acquisitions[0].active_channels
 
-    def __array_handler(self, acquisition,attribute):
-        array = getattr(acquisition,attribute)
+    @staticmethod
+    def __flags_handler(acquisition, attribute):
+        labels = [label for flag, label in acquisition_flags.items()
+                  if getattr(acquisition, attribute) & flag]
+        return ', '.join(labels)
+
+    @staticmethod
+    def __array_handler(acquisition, attribute):
+        array = getattr(acquisition, attribute)
         return ', '.join([str(item) for item in array])
 
     @staticmethod
     def __encoding_counters_handler(acquisition, attribute):
-        return getattr(acquisition.idx,attribute[4:])
+        return getattr(acquisition.idx, attribute[4:])
 
     @staticmethod
     def __user_encoding_counters_handler(acquisition, attribute):
@@ -133,7 +188,6 @@ class AcquisitionTable(QtWidgets.QTableView):
 
     def selectionChanged(self, selected, deselected):
         super().selectionChanged(selected, deselected)
-
         self.selection_changed.emit()
 
 
@@ -224,6 +278,7 @@ class AcquisitionViewer(QtWidgets.QSplitter):
         self.acquisitions.setModel(self.model)
         self.acquisitions.setAlternatingRowColors(True)
         self.acquisitions.resizeColumnsToContents()
+        self.acquisitions.setColumnWidth(1, 96)  # Start the flags out small; full width is a little ostentatious.
         self.acquisitions.selection_changed.connect(self.selection_changed)
         self.acquisitions.pressed.connect(self.mouse_clicked)
 
