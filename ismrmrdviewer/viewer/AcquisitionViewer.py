@@ -124,6 +124,8 @@ class AcquisitionModel(QtCore.QAbstractTableModel):
             'user_float': self.__array_handler
         }
 
+        self.__flags_list = self.generate_flags_list()
+
     def rowCount(self, _=None):
         return len(self.acquisitions)
 
@@ -152,6 +154,12 @@ class AcquisitionModel(QtCore.QAbstractTableModel):
             handler = self.data_handlers.get(attribute, lambda acq, attr: getattr(acq, attr))
             return handler(acquisition, attribute)
         if role == Qt.ToolTipRole:
+            if attribute == 'flags':
+                # decode flag names from bitfield
+                acquisition = self.acquisitions[index.row()]
+                flags = self.acquisitions[index.row()].flags
+                tooltip = self.getFlagsDescription(flags, self.__flags_list)
+
             return tooltip
 
         return None
@@ -178,6 +186,35 @@ class AcquisitionModel(QtCore.QAbstractTableModel):
     def __user_encoding_counters_handler(acquisition, attribute):
         array = getattr(acquisition.idx, attribute[4:])
         return ', '.join([str(item) for item in array])
+    
+    @staticmethod
+    def generate_flags_list():
+        # get flag names for flag tooltip
+        import ismrmrd
+        flags_list = [None] * 64
+        for name, value in vars(ismrmrd).items():
+            if name.startswith('ACQ_'):
+                flags_list[value-1] = name
+        return flags_list
+
+    @staticmethod
+    def getFlagsDescription(flags, flags_list):
+        tooltip = ""
+        for key, item in enumerate(flags_list):
+            if not flags & 2**key:
+                continue
+            elif item is None:
+                tooltip += "unknown flag %02d"%(key+1)
+            else:
+                tooltip += item
+            tooltip += "\n"
+        if not tooltip:
+            # fill empty tooltip
+            tooltip = "No flags set"
+        else:
+            # remove trailing newline
+            tooltip = tooltip[:-1]
+        return tooltip
 
 
 class AcquisitionTable(QtWidgets.QTableView):
