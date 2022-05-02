@@ -11,32 +11,36 @@ from matplotlib.backends.backend_qt5agg import FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from .utils import CachedDataset
 
-acquisition_flags = {
-    0x01 << 0: 'ENCODE_STEP1 :: first',
-    0x01 << 1: 'ENCODE_STEP1 :: last',
-    0x01 << 2: 'ENCODE_STEP2 :: first',
-    0x01 << 3: 'ENCODE_STEP2 :: last',
-    0x01 << 4: 'AVERAGE :: first',
-    0x01 << 5: 'AVERAGE :: last',
-    0x01 << 6: 'SLICE :: first',
-    0x01 << 7: 'SLICE :: last',
-    0x01 << 8: 'CONTRAST :: first',
-    0x01 << 9: 'CONTRAST :: last',
-    0x01 << 10: 'PHASE :: first',
-    0x01 << 11: 'PHASE :: last',
-    0x01 << 12: 'REPETITION :: first',
-    0x01 << 13: 'REPETITION :: last',
-    0x01 << 14: 'SET :: first',
-    0x01 << 15: 'SET :: last',
-    0x01 << 16: 'SEGMENT :: first',
-    0x01 << 17: 'SEGMENT :: last',
+
+
+
+def __acquisition_flag_names():
+    names = {
+    0x01 << 0: 'ENCODE_STEP1::first',
+    0x01 << 1: 'ENCODE_STEP1::last',
+    0x01 << 2: 'ENCODE_STEP2::first',
+    0x01 << 3: 'ENCODE_STEP2::last',
+    0x01 << 4: 'AVERAGE::first',
+    0x01 << 5: 'AVERAGE::last',
+    0x01 << 6: 'SLICE::first',
+    0x01 << 7: 'SLICE::last',
+    0x01 << 8: 'CONTRAST::first',
+    0x01 << 9: 'CONTRAST::last',
+    0x01 << 10: 'PHASE::first',
+    0x01 << 11: 'PHASE::last',
+    0x01 << 12: 'REPETITION::first',
+    0x01 << 13: 'REPETITION::last',
+    0x01 << 14: 'SET::first',
+    0x01 << 15: 'SET::last',
+    0x01 << 16: 'SEGMENT::first',
+    0x01 << 17: 'SEGMENT::last',
     0x01 << 18: 'NOISE_MEASUREMENT',
     0x01 << 19: 'PARALLEL_CALIBRATION',
     0x01 << 20: 'PARALLEL_CALIBRATION_AND_IMAGING',
     0x01 << 21: 'REVERSE',
     0x01 << 22: 'NAVIGATION_DATA',
     0x01 << 23: 'PHASE_CORRECTION_DATA',
-    0x01 << 24: 'MEASUREMENT :: last',
+    0x01 << 24: 'MEASUREMENT::last',
     0x01 << 25: 'HP_FEEDBACK_DATA',
     0x01 << 26: 'DUMMY_DATA',
     0x01 << 27: 'RT_FEEDBACK_DATA',
@@ -44,20 +48,28 @@ acquisition_flags = {
     0x01 << 29: 'PHASE_STABILIZATION_REFERENCE',
     0x01 << 30: 'PHASE_STABILIZATION',
 
-    0x01 << 52: 'COMPRESSION :: 1',
-    0x01 << 53: 'COMPRESSION :: 2',
-    0x01 << 54: 'COMPRESSION :: 3',
-    0x01 << 55: 'COMPRESSION :: 4',
+    0x01 << 52: 'COMPRESSION::1',
+    0x01 << 53: 'COMPRESSION::2',
+    0x01 << 54: 'COMPRESSION::3',
+    0x01 << 55: 'COMPRESSION::4',
 
-    0x01 << 56: 'USER :: 1',
-    0x01 << 57: 'USER :: 2',
-    0x01 << 58: 'USER :: 3',
-    0x01 << 59: 'USER :: 4',
-    0x01 << 60: 'USER :: 5',
-    0x01 << 61: 'USER :: 6',
-    0x01 << 62: 'USER :: 7',
-    0x01 << 63: 'USER :: 8',
-}
+    0x01 << 56: 'USER::1',
+    0x01 << 57: 'USER::2',
+    0x01 << 58: 'USER::3',
+    0x01 << 59: 'USER::4',
+    0x01 << 60: 'USER::5',
+    0x01 << 61: 'USER::6',
+    0x01 << 62: 'USER::7',
+    0x01 << 63: 'USER::8',
+    }
+
+    for i in range(31,52):
+        names[0x01 << i] = f'UNKNOWN::{i}'
+    return names 
+
+
+acquisition_flags = __acquisition_flag_names() 
+
 
 acquisition_header_fields = [
     ('version', 'Version', "ISMRMRD Version"),
@@ -124,7 +136,6 @@ class AcquisitionModel(QtCore.QAbstractTableModel):
             'user_float': self.__array_handler
         }
 
-        self.__flags_list = self.generate_flags_list()
 
     def rowCount(self, _=None):
         return len(self.acquisitions)
@@ -158,7 +169,7 @@ class AcquisitionModel(QtCore.QAbstractTableModel):
                 # decode flag names from bitfield
                 acquisition = self.acquisitions[index.row()]
                 flags = self.acquisitions[index.row()].flags
-                tooltip = self.getFlagsDescription(flags, self.__flags_list)
+                tooltip = self.__get_flags_tooltip(flags)
 
             return tooltip
 
@@ -168,10 +179,12 @@ class AcquisitionModel(QtCore.QAbstractTableModel):
         return self.acquisitions[0].active_channels
 
     @staticmethod
+    def __flag_labels(flags):
+        return [label for flag,label in  acquisition_flags.items() if flags & flag]        
+
+    @staticmethod
     def __flags_handler(acquisition, attribute):
-        labels = [label for flag, label in acquisition_flags.items()
-                  if getattr(acquisition, attribute) & flag]
-        return ', '.join(labels)
+        return ', '.join(AcquisitionModel.__flag_labels(getattr(acquisition,attribute)))
 
     @staticmethod
     def __array_handler(acquisition, attribute):
@@ -187,33 +200,15 @@ class AcquisitionModel(QtCore.QAbstractTableModel):
         array = getattr(acquisition.idx, attribute[4:])
         return ', '.join([str(item) for item in array])
     
+  
     @staticmethod
-    def generate_flags_list():
-        # get flag names for flag tooltip
-        import ismrmrd
-        flags_list = [None] * 64
-        for name, value in vars(ismrmrd).items():
-            if name.startswith('ACQ_'):
-                flags_list[value-1] = name
-        return flags_list
-
-    @staticmethod
-    def getFlagsDescription(flags, flags_list):
-        tooltip = ""
-        for key, item in enumerate(flags_list):
-            if not flags & 2**key:
-                continue
-            elif item is None:
-                tooltip += "unknown flag %02d"%(key+1)
-            else:
-                tooltip += item
-            tooltip += "\n"
+    def __get_flags_tooltip(flags):
+        labels = AcquisitionModel.__flag_labels(flags)
+        tooltip = '\n'.join(labels)
         if not tooltip:
             # fill empty tooltip
             tooltip = "No flags set"
-        else:
-            # remove trailing newline
-            tooltip = tooltip[:-1]
+  
         return tooltip
 
 
