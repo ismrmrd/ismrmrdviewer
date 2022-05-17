@@ -296,7 +296,7 @@ class AcquisitionPlotter(FigureCanvas):
 
     def set_titles(self, titles):
         for ax, title in zip(self.axis, titles):
-            ax.set_title(title, loc="right", pad=-10)
+            ax.set_title(title, loc="right")
 
 
 class TrajectoryControlGUI(QtWidgets.QWidget):
@@ -356,6 +356,9 @@ class TrajectoryPlotter(FigureCanvas):
         self.figure.legends = [self.legend]
         self.figure.canvas.draw()
 
+    def set_title(self, title):
+        self.axis.set_title(title, loc="right")
+
 
 class AcquisitionViewer(QtWidgets.QSplitter):
 
@@ -374,32 +377,46 @@ class AcquisitionViewer(QtWidgets.QSplitter):
 
         self.setOrientation(Qt.Vertical)
 
-        self.canvas = AcquisitionPlotter()
-        self.trajectory_canvas = TrajectoryPlotter()
+        def create_panel(canvas, control):
+            splitter = QtWidgets.QSplitter()
+            splitter.setOrientation(Qt.Vertical)
 
-        self.bottom_view = QtWidgets.QSplitter()
-        self.acquisition_gui = AcquisitionControlGUI(self.model.num_coils())
-        self.bottom_view.addWidget(self.acquisition_gui)
-        self.acquisition_gui.data_processing.currentIndexChanged.connect(self.selection_changed)
-        self.acquisition_gui.channel_selector.currentIndexChanged.connect(self.selection_changed)
+            layout = QtWidgets.QSplitter()
+            layout.addWidget(control)
+            layout.addWidget(NavigationToolbar(canvas, layout))
 
-        self.trajectory_view = QtWidgets.QSplitter()
-        self.trajectory_gui = TrajectoryControlGUI()
-        self.trajectory_view.addWidget(self.trajectory_gui)
-        self.trajectory_gui.trajectory_selector.currentIndexChanged.connect(self.selection_changed)
+            splitter.addWidget(canvas)
+            splitter.addWidget(layout)
+
+            return splitter
+
+        def create_data_panel():
+            self.canvas = AcquisitionPlotter()
+            self.acquisition_gui = AcquisitionControlGUI(self.model.num_coils())
+
+            self.acquisition_gui.data_processing.currentIndexChanged.connect(self.selection_changed)
+            self.acquisition_gui.channel_selector.currentIndexChanged.connect(self.selection_changed)
+
+            return create_panel(self.canvas, self.acquisition_gui)
+
+        def create_trajectory_panel():
+            self.trajectory_canvas = TrajectoryPlotter()
+            self.trajectory_gui = TrajectoryControlGUI()
+
+            self.trajectory_gui.trajectory_selector.currentIndexChanged.connect(self.selection_changed)
+
+            return create_panel(self.trajectory_canvas, self.trajectory_gui)
+
+        self.data_panel = create_data_panel()
+        self.trajectory_panel = create_trajectory_panel()
 
         self.addWidget(self.acquisitions)
-        self.addWidget(self.canvas)
-        self.addWidget(self.bottom_view)
-        self.addWidget(self.trajectory_canvas)
-        self.addWidget(self.trajectory_view)
-
-        self.bottom_view.addWidget(NavigationToolbar(self.canvas, self.bottom_view))
-        self.trajectory_view.addWidget(NavigationToolbar(self.trajectory_canvas, self.trajectory_view))
+        self.addWidget(self.data_panel)
+        self.addWidget(self.trajectory_panel)
 
         self.setStretchFactor(0, 6)
         self.setStretchFactor(1, 1)
-        self.setStretchFactor(3, 1)
+        self.setStretchFactor(2, 1)
 
     def table_clicked(self, index):
         acquisition = self.model.acquisitions[index.row()]
@@ -413,13 +430,17 @@ class AcquisitionViewer(QtWidgets.QSplitter):
         acquisitions = [self.model.acquisitions[idx] for idx in indices]
 
         self.update_canvas(acquisitions)
-        self.update_trajectory_gui(acquisitions)
-        self.update_trajectory_canvas(acquisitions)
+        self.update_trajectory(acquisitions)
 
     def update_canvas(self, acquisitions):
         self.canvas.clear()
         self.canvas.set_titles(self.acquisition_gui.axes_titles())
         self.canvas.plot(acquisitions, self.format_data, self.acquisition_gui.label)
+
+    def update_trajectory(self, acquisitions):
+        self.trajectory_panel.setVisible(any(acquisition.trajectory_dimensions for acquisition in acquisitions))
+        self.update_trajectory_gui(acquisitions)
+        self.update_trajectory_canvas(acquisitions)
 
     def update_trajectory_gui(self, acquisitions):
         self.trajectory_gui.trajectory_selector.currentIndexChanged.disconnect(self.selection_changed)
@@ -428,6 +449,7 @@ class AcquisitionViewer(QtWidgets.QSplitter):
 
     def update_trajectory_canvas(self, acquisitions):
         self.trajectory_canvas.clear()
+        self.trajectory_canvas.set_title("Trajectory")
         self.trajectory_canvas.plot(acquisitions, self.trajectory_gui.select)
 
     def mouse_clicked(self, index):
