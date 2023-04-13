@@ -1,11 +1,11 @@
 #!/usr/bin/env python
-from PySide2 import QtCore
+from PyQt5 import QtCore
 import ismrmrdviewer.ui as ui
 import sys
 import logging
 import argparse
 
-from PySide2 import QtWidgets
+from PyQt5 import QtWidgets
 
 
 def main():

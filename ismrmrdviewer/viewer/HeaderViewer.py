@@ -1,7 +1,7 @@
 import logging
 import xml.etree.ElementTree as ET
 
-from PySide2 import QtWidgets, QtCore
+from PyQt5 import QtWidgets, QtCore
 
 
 class HeaderViewer(QtWidgets.QTreeWidget):
