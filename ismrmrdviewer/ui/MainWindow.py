@@ -1,16 +1,16 @@
 
 import os
 import logging
-from PySide2 import QtCore
-from PySide2 import QtWidgets
-from PySide2.QtCore import Signal, Slot
+from PyQt5 import QtCore
+from PyQt5 import QtWidgets
+from PyQt5.QtCore import pyqtSignal, pyqtSlot
 
 from .FileWidget import FileWidget
 
 
 class MainWindow(QtWidgets.QMainWindow):
 
-    open = Signal(str)
+    open = pyqtSignal(str)
 
     def __init__(self):
         super().__init__()
@@ -22,7 +22,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.open.connect(self.open_file)
 
-    @Slot()
+    @pyqtSlot()
     def open_file_dialog(self):
 
         file_name, file_type = QtWidgets.QFileDialog.getOpenFileName(

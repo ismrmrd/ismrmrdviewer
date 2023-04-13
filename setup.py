@@ -17,7 +17,7 @@ setup(
         'matplotlib',
         'numpy',
         'pyparsing',
-        'PySide2',
+        'PyQt5',
         'python-dateutil',
         'shiboken2',
         'six'
