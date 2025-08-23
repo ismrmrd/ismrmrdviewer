@@ -4,7 +4,7 @@ import pdb
 import matplotlib.pyplot as pyplot
 import matplotlib.animation as animation
 
-from PySide2 import QtCore, QtGui, QtWidgets as QTW
+from PySide6 import QtCore, QtGui, QtWidgets as QTW
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure

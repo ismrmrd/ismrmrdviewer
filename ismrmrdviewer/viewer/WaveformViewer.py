@@ -1,8 +1,8 @@
 
 import logging
 
-from PySide2 import QtWidgets, QtCore, QtGui
-from PySide2.QtCore import Qt
+from PySide6 import QtWidgets, QtCore, QtGui
+from PySide6.QtCore import Qt
 
 import numpy as np
 import matplotlib as mpl

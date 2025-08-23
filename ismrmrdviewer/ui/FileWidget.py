@@ -1,9 +1,9 @@
 
 import ismrmrd
 
-from PySide2 import QtWidgets
-from PySide2.QtCore import Qt
-from PySide2.QtGui import QGuiApplication, QCursor
+from PySide6 import QtWidgets
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QGuiApplication, QCursor
 from ismrmrdviewer.viewer import HeaderViewer, ImageViewer, AcquisitionViewer, WaveformViewer
 
 
